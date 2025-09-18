@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create GitHub Repo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        label { display: block; margin-top: 1em; }
+        input, textarea { width: 100%; padding: 0.5em; }
+        .success { color: green; }
+        .danger { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Create a New GitHub Repository</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <form method="post">
+        <label>GitHub Token:
+            <input type="password" name="token" required>
+        </label>
+        <label>Organization Name:
+            <input type="text" name="org_name" required>
+        </label>
+        <label>Repository Name:
+            <input type="text" name="repo_name" required>
+        </label>
+        <label>Team Slugs (comma-separated):
+            <input type="text" name="team_slugs" placeholder="dev-team,ops-team" required>
+        </label>
+        <label>Labels (comma-separated, format: name:color):
+            <input type="text" name="labels" placeholder="bug:d73a4a,feature:a2eeef">
+        </label>
+        <label>
+            <input type="checkbox" name="add_cloudbuild"> Add Google Cloud Build Integration
+        </label>
+        <button type="submit">Create Repository</button>
+    </form>
+</body>
+</html>
