@@ -1,10 +1,12 @@
 """
 Interactive script to automate GitHub repo creation and setup for developers.
 Prompts for repo name, team names, labels, and Cloud Build integration.
+Optionally creates a default cloudbuild.yaml in the new repo.
 """
 
 from github import Github
 import os
+import tempfile
 
 # --- USER INPUT ---
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN") or input("Enter your GitHub token: ")
@@ -22,6 +24,7 @@ while True:
     except ValueError:
         print("Invalid format. Please use name:color (e.g., bug:d73a4a)")
 add_cloudbuild = input("Add Google Cloud Build integration? (y/n): ").lower() == "y"
+add_cloudbuild_yaml = input("Create default cloudbuild.yaml in the new repo? (y/n): ").lower() == "y"
 CLOUDBUILD_WEBHOOK_URL = "https://cloudbuild.googleapis.com/github/webhook"
 DEFAULT_BRANCH = "main"
 
@@ -68,5 +71,20 @@ branch.edit_protection(
     restrictions=None
 )
 print("Branch protection rules set.")
+
+# --- CREATE DEFAULT cloudbuild.yaml IF REQUESTED ---
+if add_cloudbuild_yaml:
+    cloudbuild_content = '''steps:\n  - name: 'gcr.io/cloud-builders/git'\n    args: ['clone', 'https://github.com/$REPO_NAME']\n  - name: 'gcr.io/cloud-builders/docker'\n    args: ['build', '-t', 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA', '.']\n  - name: 'gcr.io/cloud-builders/docker'\n    args: ['push', 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA']\n\nimages:\n  - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'\n'''
+    with tempfile.NamedTemporaryFile("w", delete=False) as tmp:
+        tmp.write(cloudbuild_content)
+        tmp_path = tmp.name
+    with open(tmp_path, "rb") as f:
+        repo.create_file(
+            path="cloudbuild.yaml",
+            message="Add default cloudbuild.yaml",
+            content=f.read(),
+            branch=DEFAULT_BRANCH
+        )
+    print("Default cloudbuild.yaml added to the new repository.")
 
 print(f"Repository '{REPO_NAME}' fully configured.")
