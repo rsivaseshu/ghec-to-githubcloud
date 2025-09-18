@@ -4,14 +4,62 @@
     <meta charset="UTF-8">
     <title>Create GitHub Repo</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 2em; }
-        label { display: block; margin-top: 1em; }
-        input, textarea { width: 100%; padding: 0.5em; }
-        .success { color: green; }
-        .danger { color: red; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f7f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 2.5em 2em 2em 2em;
+        }
+        h1 {
+            text-align: center;
+            color: #2d3a4b;
+            margin-bottom: 1.5em;
+        }
+        label {
+            display: block;
+            margin-top: 1.2em;
+            color: #2d3a4b;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.7em;
+            margin-top: 0.3em;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 1em;
+            background: #f9fafb;
+        }
+        button {
+            margin-top: 2em;
+            width: 100%;
+            padding: 0.9em;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #1e40af;
+        }
+        .success { color: green; text-align: center; }
+        .danger { color: red; text-align: center; }
     </style>
 </head>
 <body>
+    <div class="container">
     <h1>Create a New GitHub Repository</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -21,14 +69,24 @@
       {% endif %}
     {% endwith %}
     <form method="post">
-        <label>GitHub Token:
-            <input type="password" name="token" required>
-        </label>
         <label>Organization Name:
             <input type="text" name="org_name" required>
         </label>
         <label>Repository Name:
             <input type="text" name="repo_name" required>
+        </label>
+        <label>Repository Category:
+            <select name="category" required>
+                <option value="normal">Normal</option>
+                <option value="sox">SOX</option>
+                <option value="banking">Banking</option>
+            </select>
+        </label>
+        <label>Region:
+            <select name="region" required>
+                <option value="north-america">North America</option>
+                <option value="china">China</option>
+            </select>
         </label>
         <label>Team Slugs (comma-separated):
             <input type="text" name="team_slugs" placeholder="dev-team,ops-team" required>
@@ -36,10 +94,14 @@
         <label>Labels (comma-separated, format: name:color):
             <input type="text" name="labels" placeholder="bug:d73a4a,feature:a2eeef">
         </label>
-        <label>
+        <label>Code Owners (comma-separated GitHub usernames):
+            <input type="text" name="codeowners" placeholder="user1,user2">
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5em;">
             <input type="checkbox" name="add_cloudbuild"> Add Google Cloud Build Integration
         </label>
         <button type="submit">Create Repository</button>
     </form>
+    </div>
 </body>
 </html>
