@@ -206,4 +206,133 @@ if add_pr_template:
         )
     print("Default PULL_REQUEST_TEMPLATE added to the new repository.")
 
+# --- CREATE SECURITY.md IF REQUESTED ---
+add_security_md = input("Add SECURITY.md? (y/n): ").lower() == "y"
+if add_security_md:
+    security_content = (
+        "# Security Policy\n\n"
+        "## Reporting a Vulnerability\n"
+        "Please report security issues to security@example.com.\n"
+    )
+    with tempfile.NamedTemporaryFile("w", delete=False) as tmp:
+        tmp.write(security_content)
+        tmp_path = tmp.name
+    with open(tmp_path, "rb") as f:
+        repo.create_file(
+            path=".github/SECURITY.md",
+            message="Add SECURITY.md file",
+            content=f.read(),
+            branch=DEFAULT_BRANCH
+        )
+    print("SECURITY.md file added to the new repository.")
+
+# --- CREATE CONTRIBUTING.md IF REQUESTED ---
+add_contributing_md = input("Add CONTRIBUTING.md? (y/n): ").lower() == "y"
+if add_contributing_md:
+    contributing_content = (
+        "# Contributing\n\n"
+        "Thank you for considering contributing!\n\n"
+        "## How to contribute\n- Fork the repo\n- Create a feature branch\n- Submit a pull request\n"
+    )
+    with tempfile.NamedTemporaryFile("w", delete=False) as tmp:
+        tmp.write(contributing_content)
+        tmp_path = tmp.name
+    with open(tmp_path, "rb") as f:
+        repo.create_file(
+            path=".github/CONTRIBUTING.md",
+            message="Add CONTRIBUTING.md file",
+            content=f.read(),
+            branch=DEFAULT_BRANCH
+        )
+    print("CONTRIBUTING.md file added to the new repository.")
+
+# --- SLACK/TEAMS NOTIFICATION (optional, via webhook env var) ---
+import requests
+slack_webhook = os.getenv("SLACK_WEBHOOK_URL")
+if slack_webhook:
+    requests.post(slack_webhook, json={"text": f"Repo {REPO_NAME} created in {ORG_NAME}."})
+
+# --- AUDIT LOGGING ---
+from datetime import datetime
+with open("repo_audit.log", "a") as log:
+    log.write(f"{datetime.now()} | {REPO_NAME} | {ORG_NAME} | {category} | {region} | {codeowners}\n")
+
+# --- ADVANCED BRANCH PROTECTION (status checks, push restrictions) ---
+branch.edit_protection(
+    required_approving_review_count=2,
+    enforce_admins=True,
+    dismiss_stale_reviews=True,
+    require_code_owner_reviews=True,
+    required_status_checks={"strict": True, "contexts": ["ci/test", "lint"]},
+    restrictions=None
+)
+print("Advanced branch protection rules set.")
+
+# --- TEKTON PIPELINE YAML IF REQUESTED ---
+add_tekton = input("Add tekton.yaml for Tekton CI/CD? (y/n): ").lower() == "y"
+if add_tekton:
+    tekton_content = (
+        "apiVersion: tekton.dev/v1beta1\n"
+        "kind: Pipeline\n"
+        "metadata:\n  name: sample-pipeline\n"
+        "spec:\n  tasks:\n    - name: echo\n      taskSpec:\n        steps:\n          - name: echo\n            image: ubuntu\n            script: |\n              echo Hello Tekton!\n"
+    )
+    with tempfile.NamedTemporaryFile("w", delete=False) as tmp:
+        tmp.write(tekton_content)
+        tmp_path = tmp.name
+    with open(tmp_path, "rb") as f:
+        repo.create_file(
+            path="tekton.yaml",
+            message="Add Tekton pipeline template",
+            content=f.read(),
+            branch=DEFAULT_BRANCH
+        )
+    print("tekton.yaml file added to the new repository.")
+
+# --- GCP SECRET MANAGER INTEGRATION (example) ---
+add_gcp_secret = input("Create a GCP Secret? (y/n): ").lower() == "y"
+if add_gcp_secret:
+    try:
+        from google.cloud import secretmanager
+        gcp_project = input("Enter GCP project ID for secret: ")
+        secret_id = input("Enter secret name: ")
+        secret_value = input("Enter secret value: ")
+        client = secretmanager.SecretManagerServiceClient()
+        parent = f"projects/{gcp_project}"
+        secret = client.create_secret(
+            request={
+                "parent": parent,
+                "secret_id": secret_id,
+                "secret": {"replication": {"automatic": {}}},
+            }
+        )
+        client.add_secret_version(
+            request={
+                "parent": secret.name,
+                "payload": {"data": secret_value.encode()},
+            }
+        )
+        print(f"Secret {secret_id} created in GCP Secret Manager.")
+    except Exception as e:
+        print(f"GCP Secret Manager error: {e}")
+
+# --- VAULT INTEGRATION (example) ---
+add_vault_secret = input("Create a Vault secret? (y/n): ").lower() == "y"
+if add_vault_secret:
+    try:
+        import hvac
+        vault_url = input("Enter Vault URL: ")
+        vault_token = input("Enter Vault token: ")
+        secret_path = input("Enter Vault secret path: ")
+        secret_key = input("Enter secret key: ")
+        secret_value = input("Enter secret value: ")
+        client = hvac.Client(url=vault_url, token=vault_token)
+        client.secrets.kv.v2.create_or_update_secret(
+            path=secret_path,
+            secret={secret_key: secret_value},
+        )
+        print(f"Secret {secret_key} created at {secret_path} in Vault.")
+    except Exception as e:
+        print(f"Vault error: {e}")
+
 print(f"Repository '{REPO_NAME}' fully configured.")
